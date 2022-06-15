@@ -105,7 +105,9 @@ export class SpotifyService {
     return this.accessToken;
   }
 
-  private static nonHipHopArtistsIDs = this.nonHipArtists.map((artist) => artist.id);
+  private static nonHipHopArtistsIDs = this.nonHipArtists.map(
+    (artist) => artist.id
+  );
 
   static async checkIfHipHopOrRap(song: SongModel): Promise<SongModel> {
     // your application requests authorization
@@ -292,20 +294,17 @@ export class SpotifyService {
     console.log(error);
   }
 
-
   /// Check if Artist is a known non rap artists
   private static isKnownNonRapArtist(artistID: string): boolean {
     return this.nonHipHopArtistsIDs.includes(artistID);
   }
 
-
-private static hasHipHopOrRap(genres: string[]): boolean {
-  return genres.some((genre) => {
-    return (
-      (genre.includes("hip hop") || genre.includes("rap")) &&
-      !genre.includes("nigerian pop")
-    );
-  });
+  private static hasHipHopOrRap(genres: string[]): boolean {
+    return genres.some((genre) => {
+      return (
+        (genre.includes("hip hop") || genre.includes("rap")) &&
+        !genre.includes("nigerian pop")
+      );
+    });
+  }
 }
-}
-
