@@ -1,0 +1,23 @@
+{
+  "name": "hip-hop-naija",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpile-only read-csv.ts"
+  },
+  "keywords": [],
+  "author": "Lone Wolf",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.42",
+    "@types/qs": "^6.9.7",
+    "ts-node-dev": "^2.0.0"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "fast-csv": "^4.3.6",
+    "qs": "^6.10.5"
+  }
+}
