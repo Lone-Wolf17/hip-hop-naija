@@ -91,7 +91,7 @@ export class SpotifyService {
   /// Expects an array of 200 songs;
   static async extractHipHopSongs(
     tracks: SongModel[],
-    accessToken: string = ""
+    accessToken: string
   ): Promise<SongModel[]> {
     this.accessToken = accessToken;
     const track1To50 = tracks.slice(1, 50);
@@ -100,19 +100,33 @@ export class SpotifyService {
     const track151To200 = tracks.slice(151, 200);
 
     return [
-      ...(await SpotifyService.extractHipHopSongsInBatches(track1To50)),
-      ...(await SpotifyService.extractHipHopSongsInBatches(track51To100)),
-      ...(await SpotifyService.extractHipHopSongsInBatches(track101To150)),
-      ...(await SpotifyService.extractHipHopSongsInBatches(track151To200)),
+      ...(await SpotifyService.extractHipHopSongsInBatches(
+        track1To50,
+        accessToken
+      )),
+      ...(await SpotifyService.extractHipHopSongsInBatches(
+        track51To100,
+        accessToken
+      )),
+      ...(await SpotifyService.extractHipHopSongsInBatches(
+        track101To150,
+        accessToken
+      )),
+      ...(await SpotifyService.extractHipHopSongsInBatches(
+        track151To200,
+        accessToken
+      )),
     ];
   }
 
   private static async getAccessToken(): Promise<string> {
     /// If access token has already been retrieved, return it, no need to make repeated calls
     if (this.accessToken.length !== 0) {
+      console.log("Access Token Found");
       return this.accessToken;
     }
 
+    console.log("No Access Token Found");
     const authOptions = {
       url: "https://accounts.spotify.com/api/token",
       headers: {
@@ -224,7 +238,8 @@ export class SpotifyService {
   }
   // tracks must not be more than 50
   private static async extractHipHopSongsInBatches(
-    tracks: SongModel[]
+    tracks: SongModel[],
+    accessToken: string
   ): Promise<SongModel[]> {
     if (tracks.length > 50) {
       throw Error("Limit is 50 tracks per batch");
@@ -239,8 +254,8 @@ export class SpotifyService {
     trackIdsQuery = trackIdsQuery.slice(0, trackIdsQuery.length - 1);
 
     // use the access token to access the Spotify Web API
-
-    const token = await this.getAccessToken();
+    // const token = await this.getAccessToken();
+    const token = accessToken;
 
     const options = {
       url: `https://api.spotify.com/v1/tracks?ids=${trackIdsQuery}`,
@@ -269,7 +284,7 @@ export class SpotifyService {
 
         song.artistID = songOwner.id;
         song.artistName = songOwner.name;
-        song.imageUrl = trackData.album.images[0].url
+        song.imageUrl = trackData.album.images[0].url;
       }
 
       return song;
@@ -424,5 +439,35 @@ export class SpotifyService {
       }
       return;
     }
+  }
+
+  static async updateSpotifyPlaylist(
+    hipHopSongs: SongModel[],
+    accessToken: string
+  ) {
+    const url = `https://api.spotify.com/v1/playlists/${process.env.PLAYLIST_ID}/tracks`;
+    // const token = await this.getAccessToken();
+    const headers = {
+      Authorization: "Bearer " + accessToken,
+    };
+    // let uris = "";
+    const uris = hipHopSongs.map((song) => {
+      return `spotify:track:${song.spotifyID}`;
+    });
+
+    /// remove trailing comma ','
+    // uris = uris.slice(0, uris.length - 1);
+    const payload = {
+      uris,
+    };
+    console.log(payload);
+    const response = await axios.put(url, payload, { headers });
+    if (response.status !== 201) {
+      console.log(response.data);
+      console.log(response.status, response.statusText);
+      throw Error("Playlist Upadate failed");
+    }
+
+    return true;
   }
 }

@@ -29,6 +29,8 @@ var app = express();
 
 app
   .use(express.static(__dirname + "/public"))
+  .use(express.json())
+  .use(express.urlencoded({ extended: true }))
   .use(cors())
   .use(cookieParser())
   .set("views", path.join(__dirname, "views"))

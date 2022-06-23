@@ -1,12 +1,27 @@
 <div class="mt-3">
+  <form
+    action="/update-playlist-on-spotify?accessToken={{accessToken}}"
+    method="POST"
+  >
+    <input type="hidden" name="hipHopSongs" value="{{hipHopSongs}}" />
+    <input type="hidden" name="accessToken" value="{{accessToken}}" />
+    <input
+      type="submit"
+      class="btn btn-primary"
+      value="Update Playlist on Spotify"
+    />
+  </form>
+  {{!-- <a
+    href="/update-playlist-on-spotify?accessToken={{accessToken}}"
+    class="btn btn-primary"
+    id="update-spotify-playlist"
+  >
+    Update Playlist on Spotify
+  </a> --}}
   {{#each hipHopSongs}}
     <div class="media">
       <div class="pull-left">
-        <img
-          class="media-object"
-          width="150"
-          src="{{imageUrl}}"
-        />
+        <img class="media-object" width="150" src="{{imageUrl}}" />
       </div>
       <div class="media-body">
         <dl class="dl-horizontal">
@@ -20,3 +35,11 @@
     </div>
   {{/each}}
 </div>
+
+<script>
+  document.getElementById("update-spotify-playlist").addEventListener( "click",
+  function () { $.ajax({ url: "/refresh_token", data: { refresh_token:
+  refresh_token, }, }).done(function (data) { access_token = data.access_token;
+  oauthPlaceholder.innerHTML = oauthTemplate({ access_token: access_token,
+  refresh_token: refresh_token, }); }); }, false );
+</script>

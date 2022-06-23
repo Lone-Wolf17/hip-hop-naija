@@ -34,20 +34,7 @@
         </button>
         <br />
         <br />
-        <a
-          href="/retrieve-playlists"
-          class="btn btn-primary"
-          id="obtain-user-playlists"
-        >
-          Obtain User list of playlist
-        </a>
-        <a
-          href="/prepare-rap-playlist"
-          class="btn btn-primary"
-          id="obtain-user-playlists"
-        >
-          Prepare Rap Playlist
-        </a>
+        <div id="playlist-actions"></div>
       </div>
     </div>
 
@@ -83,6 +70,23 @@
       </dl>
     </script>
 
+    <script id="playlist-actions-template" type="text/x-handlebars-template">
+      <a
+        href="/retrieve-playlists?accessToken={{access_token}}"
+        class="btn btn-primary"
+        id="obtain-user-playlists"
+      >
+        Obtain User list of playlist
+      </a>
+      <a
+        href="/prepare-rap-playlist?accessToken={{access_token}}"
+        class="btn btn-primary"
+        id="obtain-user-playlists"
+      >
+        Prepare Rap Playlist
+      </a>
+    </script>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
@@ -112,6 +116,10 @@
           oauthTemplate = Handlebars.compile(oauthSource),
           oauthPlaceholder = document.getElementById("oauth");
 
+          var playlistActionsSource = document.getElementById("playlist-actions-template").innerHTML,
+          playlistActionsTemplate = Handlebars.compile(playlistActionsSource),
+          playlistActionsPlaceholder = document.getElementById("playlist-actions");
+
         var params = getHashParams();
 
         var access_token = params.access_token,
@@ -126,6 +134,10 @@
             oauthPlaceholder.innerHTML = oauthTemplate({
               access_token: access_token,
               refresh_token: refresh_token,
+            });
+
+            playlistActionsPlaceholder.innerHTML = playlistActionsTemplate({
+              access_token: access_token
             });
 
             $.ajax({

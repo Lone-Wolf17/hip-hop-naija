@@ -4,6 +4,7 @@ import qs from "qs";
 
 import { readSongsFromTop200CSV as extractSongsFromTop200CSV } from "../read-csv";
 import { SpotifyService } from "../services/spotify-service";
+import SongModel from "../models/song-model";
 
 const router = Router();
 
@@ -13,8 +14,10 @@ const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 const PORT = process.env.PORT || 8686;
 const redirect_uri = `http://localhost:${PORT}/callback`; // Your redirect uri
 
-var access_token = "";
-var refresh_token = "";
+// var access_token = "";
+// var refresh_token = "";
+
+var hipHopSongs: SongModel[] = [];
 
 router.get("/handle", function (req, res) {
   res.render("home");
@@ -90,8 +93,8 @@ router.get("/callback", async function (req, res) {
       );
     }
 
-    access_token = authResponse.data.access_token;
-    refresh_token = authResponse.data.refresh_token;
+    const access_token = authResponse.data.access_token;
+    const refresh_token = authResponse.data.refresh_token;
 
     var tokenReqOptions = {
       url: "https://api.spotify.com/v1/me",
@@ -141,7 +144,7 @@ router.get("/refresh_token", async function (req, res) {
   );
 
   if (response.status === 200) {
-    access_token = response.data.access_token;
+    const access_token = response.data.access_token;
     res.send({
       access_token: access_token,
     });
@@ -156,9 +159,10 @@ router.get("/refresh_token", async function (req, res) {
 });
 
 router.get("/retrieve-playlists", async function (req, res) {
+  const accessToken = req.query.accessToken as string;
   const url =
     "https://api.spotify.com/v1/playlists/37i9dQZF1DWUHcUDX0za7N/tracks";
-  const headers = { Authorization: "Bearer " + access_token };
+  const headers = { Authorization: "Bearer " + accessToken };
 
   // use the access token to access the Spotify Web API
   const playlistResponse = await axios.get(url, { headers: headers });
@@ -180,33 +184,55 @@ router.get("/retrieve-playlists", async function (req, res) {
     // console.log(naijaBarsPlaylist);
 
     // we can also pass the token to the browser to make requests from there
-    res.redirect(
-      "/#" +
-        qs.stringify({
-          access_token: access_token,
-          refresh_token: refresh_token,
-        })
-    );
+    res.send(playlistResponse.data.items);
   }
 });
 
 router.get("/prepare-rap-playlist", async function (req, res) {
+  const accessToken = req.query.accessToken as string;
   const top200Songs = await extractSongsFromTop200CSV();
   try {
-    const hipHopSongs = await SpotifyService.extractHipHopSongs(
+    console.log("Access Token", accessToken);
+    hipHopSongs = await SpotifyService.extractHipHopSongs(
       top200Songs,
-      access_token
+      accessToken
     );
     console.log(
       "*******************************************************************************************"
     );
-    console.log("Hip Hop Tracks::: ", hipHopSongs);
+    // console.log("Hip Hop Tracks::: ", hipHopSongs);
     // res.send(hipHopTracks);
     res.render("hip-hop-songs", {
       hipHopSongs,
+      accessToken,
     });
   } catch (error: any) {
     console.error(error);
+  }
+});
+
+router.post("/update-playlist-on-spotify", async function (req, res) {
+  try {
+    const accessToken = req.query.accessToken as string;
+    // hipHopSongs = req.body.hipHopSongs;
+    // console.log("Access token", req.body.accessToken);
+    console.log("Hip Hop Songs", hipHopSongs);
+    const result = await SpotifyService.updateSpotifyPlaylist(
+      hipHopSongs,
+      accessToken
+    );
+    if (result) {
+      res.send("<h4>Playlist Update Successful</h4>");
+    } else {
+      res.send("<h4>Playlist Update Failed</h4>");
+    }
+  } catch (error: any) {
+    if (error.response?.data) {
+      console.log(error.response.data);
+    } else {
+      console.error(error);
+    }
+    res.send("<h4>Playlist Update Failed</h4>");
   }
 });
 
