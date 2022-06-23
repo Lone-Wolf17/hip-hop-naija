@@ -7,6 +7,7 @@ export default class SongModel {
   genres: string[] = [];
   artistID? : string;
   artistName? : string;
+  imageUrl?: string;
 
   constructor(
     name: string,

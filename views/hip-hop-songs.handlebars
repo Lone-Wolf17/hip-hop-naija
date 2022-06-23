@@ -1,0 +1,22 @@
+<div class="mt-3">
+  {{#each hipHopSongs}}
+    <div class="media">
+      <div class="pull-left">
+        <img
+          class="media-object"
+          width="150"
+          src="{{imageUrl}}"
+        />
+      </div>
+      <div class="media-body">
+        <dl class="dl-horizontal">
+          <dt><b>Name:</b></dt><dd>{{name}}</dd>
+          <dt><b>Song ID:</b></dt><dd class="clearfix">{{spotifyID}}</dd>
+          <dt><b>Artist Name:</b></dt><dd>{{artistName}}</dd>
+          <dt><b>Artist ID:</b></dt><dd>{{artistID}}</dd>
+          <dt><b>Top 200 Rank:</b></dt><dd>{{top200Rank}}</dd>
+        </dl>
+      </div>
+    </div>
+  {{/each}}
+</div>

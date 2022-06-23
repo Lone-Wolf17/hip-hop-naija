@@ -63,7 +63,49 @@ export class SpotifyService {
       id: "687cZJR45JO7jhk1LHIbgq",
       name: "Tems",
     },
+    {
+      name: "Mr Eazi",
+      id: "4TAoP0f9OuWZUesao43xUW",
+    },
   ];
+
+  static knownHipHopArtists: Artist[] = [
+    {
+      name: "Ladipoe",
+      id: "379IT6Szv0zgnw4xrdu4mu",
+    },
+    {
+      id: "2LiqbH7OhqP0yuaG8VL1wJ",
+      name: "Black Sherrif",
+    },
+    {
+      id: "7oVwzvvrXEC8LbXhaNjTi4",
+      name: "Ajebo Hustlers",
+    },
+    {
+      id: "4Hyl7QROvzELSzMO7OXdjr",
+      name: "Psycho YP",
+    },
+  ];
+
+  /// Expects an array of 200 songs;
+  static async extractHipHopSongs(
+    tracks: SongModel[],
+    accessToken: string = ""
+  ): Promise<SongModel[]> {
+    this.accessToken = accessToken;
+    const track1To50 = tracks.slice(1, 50);
+    const track51To100 = tracks.slice(51, 100);
+    const track101To150 = tracks.slice(101, 150);
+    const track151To200 = tracks.slice(151, 200);
+
+    return [
+      ...(await SpotifyService.extractHipHopSongsInBatches(track1To50)),
+      ...(await SpotifyService.extractHipHopSongsInBatches(track51To100)),
+      ...(await SpotifyService.extractHipHopSongsInBatches(track101To150)),
+      ...(await SpotifyService.extractHipHopSongsInBatches(track151To200)),
+    ];
+  }
 
   private static async getAccessToken(): Promise<string> {
     /// If access token has already been retrieved, return it, no need to make repeated calls
@@ -106,6 +148,10 @@ export class SpotifyService {
   }
 
   private static nonHipHopArtistsIDs = this.nonHipArtists.map(
+    (artist) => artist.id
+  );
+
+  private static knownHipHopArtistsIDs = this.knownHipHopArtists.map(
     (artist) => artist.id
   );
 
@@ -161,7 +207,7 @@ export class SpotifyService {
       if (!genres) {
         return song;
       }
-      const isHipHopOrRap = this.hasHipHopOrRap(genres);
+      const isHipHopOrRap = this.hasHipHopOrRapGenre(genres);
 
       song.isHipHop = isHipHopOrRap;
       song.genres = genres;
@@ -177,7 +223,9 @@ export class SpotifyService {
     }
   }
   // tracks must not be more than 50
-  static async getSongDataInBatches(tracks: SongModel[]): Promise<SongModel[]> {
+  private static async extractHipHopSongsInBatches(
+    tracks: SongModel[]
+  ): Promise<SongModel[]> {
     if (tracks.length > 50) {
       throw Error("Limit is 50 tracks per batch");
     }
@@ -221,6 +269,7 @@ export class SpotifyService {
 
         song.artistID = songOwner.id;
         song.artistName = songOwner.name;
+        song.imageUrl = trackData.album.images[0].url
       }
 
       return song;
@@ -281,14 +330,16 @@ export class SpotifyService {
         console.log(artist);
       }
 
-      const isHipHopOrRap = this.hasHipHopOrRap(genres);
+      const isHipHopOrRap = this.hasHipHopOrRapGenre(genres);
 
       song.isHipHop = isHipHopOrRap;
       song.genres = genres;
       return song;
     });
 
-    return songsWithGenreData.filter((element) => element.isHipHop);
+    return songsWithGenreData.filter(
+      (element) => element.isHipHop || this.isKnownRapArtist(element?.artistID!)
+    );
   }
   catch(error: any) {
     console.log(error);
@@ -299,12 +350,79 @@ export class SpotifyService {
     return this.nonHipHopArtistsIDs.includes(artistID);
   }
 
-  private static hasHipHopOrRap(genres: string[]): boolean {
+  /// Check if Artist is a known rap artist
+  private static isKnownRapArtist(artistID: string): boolean {
+    return this.knownHipHopArtistsIDs.includes(artistID);
+  }
+
+  private static hasHipHopOrRapGenre(genres: string[]): boolean {
     return genres.some((genre) => {
       return (
         (genre.includes("hip hop") || genre.includes("rap")) &&
         !genre.includes("nigerian pop")
       );
     });
+  }
+
+  static async getSongDetails(songSpotifyId: string) {
+    try {
+      // use the access token to access the Spotify Web API
+      console.log("Fire 1");
+      const token = await this.getAccessToken();
+      console.log("Fire 2");
+      const options = {
+        url: `https://api.spotify.com/v1/tracks/${songSpotifyId}`,
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      };
+
+      console.log(options);
+
+      const res = await axios.get(options.url, {
+        headers: options.headers,
+      });
+      // console.log("Point C");
+
+      if (!(res.status == 200)) {
+        throw Error("Track Data request failed");
+      }
+      const songOwner = res.data.artists[0];
+
+      const artistReqOptions = {
+        url: `https://api.spotify.com/v1/artists/${songOwner.id}`,
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+        json: true,
+      };
+
+      const artistRes = await axios.get(artistReqOptions.url, {
+        headers: artistReqOptions.headers,
+      });
+
+      if (!(artistRes.status === 200)) {
+        throw Error("Artist Data request failed");
+      }
+      const genres = artistRes.data.genres;
+      if (!genres) {
+        songOwner.isHipHop = false;
+        return songOwner;
+      }
+      const isHipHopOrRap = this.hasHipHopOrRapGenre(genres);
+
+      songOwner.isHipHop = isHipHopOrRap;
+      songOwner.genres = genres;
+      return songOwner;
+    } catch (error: any) {
+      if (error.response) {
+        console.log(error.response);
+        console.log("Response Status::", error.response.status);
+        console.log(error.response.statusText);
+      } else {
+        console.log(error);
+      }
+      return;
+    }
   }
 }

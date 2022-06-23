@@ -5,19 +5,27 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only read-csv.ts"
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "playground": "ts-node-dev playground.ts"
   },
   "keywords": [],
   "author": "Lone Wolf",
   "license": "ISC",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.3",
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
     "@types/node": "^17.0.42",
     "@types/qs": "^6.9.7",
     "ts-node-dev": "^2.0.0"
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-handlebars": "^6.0.6",
     "fast-csv": "^4.3.6",
     "qs": "^6.10.5"
   }
